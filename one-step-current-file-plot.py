@@ -14,11 +14,11 @@ def read_csv_file(file_path):
         return None
 
 # Function to plot the data
-def plot_data(data, option='Median'):
+def plot_data(data):
     if data is not None:
         fig, ax = plt.subplots(figsize=(10, 6))
         plt.subplots_adjust(left=0.3)  # Adjust space for radio buttons
-        
+
         # Scatter plots for Cathode and Anode currents
         ax.scatter(data['RelativeMilliseconds'], data['CathodeCurrent(uA)'], label='Cathode Current', s=5)
         ax.scatter(data['RelativeMilliseconds'], data['AnodeCurrent(uA)'], label='Anode Current', s=5)
@@ -27,13 +27,9 @@ def plot_data(data, option='Median'):
         cathode_non_zero = data[data['CathodeCurrent(uA)'] != 0]['CathodeCurrent(uA)']
         anode_non_zero = data[data['AnodeCurrent(uA)'] != 0]['AnodeCurrent(uA)']
 
-        # Add horizontal lines for mean or median based on option
-        if option == 'Median':
-            ax.axhline(cathode_non_zero.median(), color='blue', linestyle='--', label=f'Cathode Median: {cathode_non_zero.median():.2f}')
-            ax.axhline(anode_non_zero.median(), color='orange', linestyle='--', label=f'Anode Median: {anode_non_zero.median():.2f}')
-        elif option == 'Mean':
-            ax.axhline(cathode_non_zero.mean(), color='blue', linestyle='--', label=f'Cathode Mean: {cathode_non_zero.mean():.2f}')
-            ax.axhline(anode_non_zero.mean(), color='orange', linestyle='--', label=f'Anode Mean: {anode_non_zero.mean():.2f}')
+        # Add initial horizontal lines for median (default)
+        cathode_line = ax.axhline(cathode_non_zero.median(), color='blue', linestyle='--', label=f'Cathode Median: {cathode_non_zero.median():.2f}')
+        anode_line = ax.axhline(anode_non_zero.median(), color='orange', linestyle='--', label=f'Anode Median: {anode_non_zero.median():.2f}')
 
         # Configure the plot
         ax.set_xlabel('Relative Milliseconds')
@@ -41,35 +37,28 @@ def plot_data(data, option='Median'):
         ax.set_title('Current vs. Time')
         ax.legend()
 
-        # Add radio buttons for interactivity
+        # Add radio buttons for user to choose
         ax_radio = plt.axes([0.05, 0.4, 0.2, 0.15])  # Position for radio buttons [left, bottom, width, height]
-        radio_buttons = RadioButtons(ax_radio, ('Non-zero Median', 'Non-zero Mean'))
+        radio_buttons = RadioButtons(ax_radio, ('Median', 'Mean'))
 
-        def update_plot(label):
-            """Update the plot based on selected statistic."""
-            ax.clear()  # Clear the current axes
-            
-            # Re-plot scatter points
-            ax.scatter(data['RelativeMilliseconds'], data['CathodeCurrent(uA)'], label='Cathode Current', s=5)
-            ax.scatter(data['RelativeMilliseconds'], data['AnodeCurrent(uA)'], label='Anode Current', s=5)
+        def update_lines(label):
+            """Update only the horizontal lines based on selected statistic."""
+            if label == 'Median':
+                # Wrap scalar values in lists to create sequences
+                cathode_line.set_ydata([cathode_non_zero.median()])
+                cathode_line.set_label(f'Cathode Median: {cathode_non_zero.median():.2f}')
+                anode_line.set_ydata([anode_non_zero.median()])
+                anode_line.set_label(f'Anode Median: {anode_non_zero.median():.2f}')
+            elif label == 'Mean':
+                cathode_line.set_ydata([cathode_non_zero.mean()])
+                cathode_line.set_label(f'Cathode Mean: {cathode_non_zero.mean():.2f}')
+                anode_line.set_ydata([anode_non_zero.mean()])
+                anode_line.set_label(f'Anode Mean: {anode_non_zero.mean():.2f}')
 
-            # Add updated horizontal lines
-            if label == 'Non-zero Median':
-                ax.axhline(cathode_non_zero.median(), color='blue', linestyle='--', label=f'Cathode Median: {cathode_non_zero.median():.2f}')
-                ax.axhline(anode_non_zero.median(), color='orange', linestyle='--', label=f'Anode Median: {anode_non_zero.median():.2f}')
-            elif label == 'Non-zero Mean':
-                ax.axhline(cathode_non_zero.mean(), color='blue', linestyle='--', label=f'Cathode Mean: {cathode_non_zero.mean():.2f}')
-                ax.axhline(anode_non_zero.mean(), color='orange', linestyle='--', label=f'Anode Mean: {anode_non_zero.mean():.2f}')
-
-            # Update labels and legend
-            ax.set_xlabel('Relative Milliseconds')
-            ax.set_ylabel('Current (uA)')
-            ax.set_title('Current vs. Time')
             ax.legend()
-            
-            plt.draw()  # Redraw the figure
+            plt.draw()
 
-        radio_buttons.on_clicked(update_plot)  # Connect radio buttons to update function
+        radio_buttons.on_clicked(update_lines)  # Connect radio buttons to update function
 
         plt.show()
 
