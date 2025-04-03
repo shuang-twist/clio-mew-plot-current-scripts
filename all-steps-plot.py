@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import tkinter as tk
 from tkinter import filedialog
 import os
-from matplotlib.widgets import RadioButtons
+from matplotlib.widgets import CheckButtons
 
 # Function to read the CSV file
 def read_csv_file(file_path):
@@ -48,7 +48,7 @@ def select_and_plot_csv():
 
         print(integer_folder_names)
 
-        # Dynamically calculate height for radio button area based on number of items
+        # Dynamically calculate height for check button area based on number of items
         base_height = 0.15  # Base height for up to 5 items
         threshold = 5       # Number of items before increasing height
         additional_height_per_item = 0.03  # Additional height per item beyond threshold
@@ -61,12 +61,12 @@ def select_and_plot_csv():
         # Ensure total height does not exceed figure limits (e.g., max 0.8)
         total_height = min(total_height, 0.8)
 
-        # Create a figure and axes for radio buttons and plot
+        # Create a figure and axes for check buttons and plot
         fig = plt.figure(figsize=(10, 6))
         
-        # Define axes for radio buttons with dynamic height
-        ax_radio_stat = plt.axes([0.05, 0.4, 0.2, total_height])
-        radio_stat = RadioButtons(ax_radio_stat, [str(num) for num in integer_folder_names])  # Convert integers to strings for labels
+        # Define axes for check buttons with dynamic height
+        ax_check_stat = plt.axes([0.05, 0.4, 0.2, total_height])
+        check_stat = CheckButtons(ax_check_stat, [str(num) for num in integer_folder_names], [False] * len(integer_folder_names))
 
         # Define axes for plotting (right side of the figure)
         ax_plot = plt.axes([0.3, 0.1, 0.6, 0.8])
@@ -75,36 +75,39 @@ def select_and_plot_csv():
             # Clear only the plot area (ax_plot)
             ax_plot.clear()
             
-            # Get data for selected folder (convert label back to integer)
-            folder_number = int(label)
-            if folder_number in data_dict:
-                # Extract data
-                data = data_dict[folder_number]
-                
-                # Plot Cathode Current
-                ax_plot.scatter(data['RelativeMilliseconds'], 
-                                data['CathodeCurrent(uA)'], 
-                                label=f'{folder_number} - Cathode', 
-                                s=5, color='blue')
-                
-                # Plot Anode Current
-                ax_plot.scatter(data['RelativeMilliseconds'], 
-                                data['AnodeCurrent(uA)'], 
-                                label=f'{folder_number} - Anode', 
-                                s=5, color='orange')
+            # Get selected folders from check buttons
+            selected_folders = [int(lbl) for lbl, checked in zip(integer_folder_names, check_stat.get_status()) if checked]
+
+            if selected_folders:
+                for folder_number in selected_folders:
+                    if folder_number in data_dict:
+                        # Extract data
+                        data = data_dict[folder_number]
+                        
+                        # Plot Cathode Current
+                        ax_plot.scatter(data['RelativeMilliseconds'], 
+                                        data['CathodeCurrent(uA)'], 
+                                        label=f'{folder_number} - Cathode', 
+                                        s=5)
+
+                        # Plot Anode Current
+                        ax_plot.scatter(data['RelativeMilliseconds'], 
+                                        data['AnodeCurrent(uA)'], 
+                                        label=f'{folder_number} - Anode', 
+                                        s=5)
 
                 ax_plot.set_xlabel('Relative Milliseconds')
                 ax_plot.set_ylabel('Current (uA)')
-                ax_plot.set_title(f'Currents for Folder {folder_number}')
+                ax_plot.set_title(f'Currents for Selected Folders')
                 ax_plot.legend()
                 
                 # Redraw only the updated plot area
                 fig.canvas.draw_idle()
             else:
-                print(f"No data found for Folder {folder_number}")
+                print("No folders selected.")
 
-        # Connect radio button clicks to update_fig function
-        radio_stat.on_clicked(update_fig)
+        # Connect check button clicks to update_fig function
+        check_stat.on_clicked(update_fig)
 
         plt.show()  # Show the plot window
 
