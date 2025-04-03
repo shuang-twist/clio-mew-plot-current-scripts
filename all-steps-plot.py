@@ -13,33 +13,6 @@ def read_csv_file(file_path):
         print(f"Failed to read CSV file: {e}")
         return None
 
-# Function to plot the data and save it as an image
-def plot_data_and_save(data, title, folder_path):
-    if data is not None:
-        plt.figure(figsize=(10,6))
-        
-        # Plot CathodeCurrent(uA) against RelativeMilliseconds with smaller dots
-        plt.scatter(data['RelativeMilliseconds'], data['CathodeCurrent(uA)'], label='Cathode Current', s=5)
-
-        # Plot AnodeCurrent(uA) against RelativeMilliseconds with smaller dots
-        plt.scatter(data['RelativeMilliseconds'], data['AnodeCurrent(uA)'], label='Anode Current', s=5)
-        
-        # Calculate and display medians
-        cathode_median = data['CathodeCurrent(uA)'].median()
-        anode_median = data['AnodeCurrent(uA)'].median()
-        plt.axhline(y=cathode_median, color='blue', linestyle='--', label=f'Cathode Median: {cathode_median:.2f}')
-        plt.axhline(y=anode_median, color='orange', linestyle='--', label=f'Anode Median: {anode_median:.2f}')
-
-        plt.xlabel('Relative Milliseconds')
-        plt.ylabel('Current (uA)')
-        plt.title(title)
-        plt.legend()
-
-        # Save the plot as an image in the specified folder
-        plot_file_path = os.path.join(folder_path, f'{title}.png')
-        plt.savefig(plot_file_path)
-        plt.close()  # Close the plot to free up memory
-
 # Function to select and plot CSV files from subfolders
 def select_and_plot_csv():
     # Open file dialog to select a folder
@@ -52,6 +25,9 @@ def select_and_plot_csv():
         plots_folder = os.path.join(folder_path, 'current_plots')
         os.makedirs(plots_folder, exist_ok=True)
 
+        # Dictionary to store data for combined plotting
+        data_dict = {}
+
         for folder_name in os.listdir(folder_path):
             folder_path_full = os.path.join(folder_path, folder_name)
             if os.path.isdir(folder_path_full):
@@ -60,17 +36,40 @@ def select_and_plot_csv():
                 except ValueError:
                     continue  # Skip if not an integer
                 
-                csv_found = False
                 for file_name in os.listdir(folder_path_full):
                     if "_Current_" in file_name and file_name.endswith(".csv"):
                         file_path_full = os.path.join(folder_path_full, file_name)
                         data = read_csv_file(file_path_full)
-                        plot_data_and_save(data, f"Folder_{folder_name}", plots_folder)
-                        csv_found = True
-                        break  # Plot the first matching file and move to the next folder
+                        if data is not None:
+                            data_dict[f"Folder_{folder_name}"] = data
+                        break  # Process the first matching CSV file in the folder
+
+        # Plot all data on one figure
+        if data_dict:
+            plt.figure(figsize=(12, 8))
+            
+            for label, data in data_dict.items():
+                # Plot CathodeCurrent(uA) against RelativeMilliseconds with smaller dots
+                plt.scatter(data['RelativeMilliseconds'], 
+                            data['CathodeCurrent(uA)'], 
+                            label=f'{label} - Cathode', s=5)
                 
-                if not csv_found:
-                    print(f"No CSV file found in folder {folder_name}")
+                # Plot AnodeCurrent(uA) against RelativeMilliseconds with smaller dots
+                plt.scatter(data['RelativeMilliseconds'], 
+                            data['AnodeCurrent(uA)'], 
+                            label=f'{label} - Anode', s=5)
+
+            plt.xlabel('Relative Milliseconds')
+            plt.ylabel('Current (uA)')
+            plt.title('Combined Plot of Cathode and Anode Currents')
+            plt.legend()
+            
+            # Save and show the combined plot
+            combined_plot_path = os.path.join(plots_folder, "combined_plot.png")
+            plt.savefig(combined_plot_path)
+            plt.show()
+        else:
+            print("No valid CSV files found.")
 
 # Main function
 def main():
