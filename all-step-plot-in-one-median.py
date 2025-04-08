@@ -36,9 +36,9 @@ def plot_median_csvs_side_by_side(data_dict):
 
         # Plot median data points
         ax.scatter(grouped['RelativeMilliseconds'], grouped['CathodeCurrent(uA)'],
-                   s=40, color='blue', alpha=0.7, label='Cathode Median')
+                   s=20, color='blue', alpha=0.7, label='Cathode Median')
         ax.scatter(grouped['RelativeMilliseconds'], grouped['AnodeCurrent(uA)'],
-                   s=40, color='orange', alpha=0.7, label='Anode Median')
+                   s=20, color='orange', alpha=0.7, label='Anode Median')
 
         # Horizontal median lines (of non-zero raw data)
         cathode_non_zero = data[data['CathodeCurrent(uA)'] != 0]['CathodeCurrent(uA)']
