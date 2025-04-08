@@ -1,68 +1,79 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import tkinter as tk
+from tkinter import filedialog
 import os
-from tkinter import filedialog, Tk
 
-# Function to read CSV files from a folder
-def read_csvs_from_folder(folder_path):
-    csv_files = [f for f in os.listdir(folder_path) if f.lower().endswith('.csv')]
-    all_data = []
-    for f in sorted(csv_files):
-        try:
-            df = pd.read_csv(os.path.join(folder_path, f))
-            df['__source__'] = f  # Keep track of file source
-            all_data.append(df)
-        except Exception as e:
-            print(f"Error reading {f}: {e}")
-    return all_data
+# Function to read the CSV file
+def read_csv_file(file_path):
+    try:
+        data = pd.read_csv(file_path)
+        return data
+    except Exception as e:
+        print(f"Failed to read CSV file: {e}")
+        return None
 
-# Function to plot all CSVs side by side
-def plot_multiple_csvs(data_list):
-    n_files = len(data_list)
-    if n_files == 0:
-        print("No CSV data to plot.")
+# Function to plot CSVs side by side with shared y-axis
+def plot_csvs_side_by_side(data_dict):
+    folder_numbers = sorted(data_dict.keys())
+    n = len(folder_numbers)
+    if n == 0:
+        print("No valid CSV files to plot.")
         return
 
-    fig, axs = plt.subplots(1, n_files, figsize=(6 * n_files, 6), sharey=True)
-    if n_files == 1:
-        axs = [axs]  # Ensure axs is iterable
+    fig, axs = plt.subplots(1, n, figsize=(5 * n, 6), sharey=True)
+    if n == 1:
+        axs = [axs]  # Make it iterable
 
-    for ax, data in zip(axs, data_list):
-        filename = data['__source__'].iloc[0]
-
-        # Scatter plots
-        ax.scatter(data['RelativeMilliseconds'], data['CathodeCurrent(uA)'], label='Cathode', s=5)
-        ax.scatter(data['RelativeMilliseconds'], data['AnodeCurrent(uA)'], label='Anode', s=5)
-
-        # Non-zero stats
-        cathode_non_zero = data[data['CathodeCurrent(uA)'] != 0]['CathodeCurrent(uA)']
-        anode_non_zero = data[data['AnodeCurrent(uA)'] != 0]['AnodeCurrent(uA)']
-
-        # Reference lines
-        ax.axhline(cathode_non_zero.median(), color='blue', linestyle='--',
-                   label=f'Cathode Median: {cathode_non_zero.median():.2f}')
-        ax.axhline(anode_non_zero.median(), color='orange', linestyle='--',
-                   label=f'Anode Median: {anode_non_zero.median():.2f}')
-
-        ax.set_title(filename)
-        ax.set_xlabel('Time (ms)')
-        ax.set_ylabel('Current (uA)')
+    for ax, folder_num in zip(axs, folder_numbers):
+        data = data_dict[folder_num]
+        cathode = data['CathodeCurrent(uA)']
+        anode = data['AnodeCurrent(uA)']
+        
+        ax.scatter(data['RelativeMilliseconds'], cathode, s=5, label='Cathode')
+        ax.scatter(data['RelativeMilliseconds'], anode, s=5, label='Anode')
+        
+        # Horizontal lines
+        cathode_med = cathode[cathode != 0].median()
+        anode_med = anode[anode != 0].median()
+        ax.axhline(cathode_med, color='blue', linestyle='--', label=f'Cathode Median: {cathode_med:.2f}')
+        ax.axhline(anode_med, color='orange', linestyle='--', label=f'Anode Median: {anode_med:.2f}')
+        
+        ax.set_title(f'Folder {folder_num}')
+        ax.set_xlabel('Relative Milliseconds')
         ax.legend()
 
-    fig.suptitle('Current vs. Time Across CSV Files', fontsize=16)
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    axs[0].set_ylabel('Current (uA)')
+    fig.suptitle('Current vs Time for Each Folder', fontsize=16)
+    plt.tight_layout()
     plt.show()
 
-# Main function to select folder and plot
-def select_folder_and_plot():
-    root = Tk()
+# Function to select folder and extract data
+def select_and_plot_all_subfolder_csvs():
+    root = tk.Tk()
     root.withdraw()
-    folder_selected = filedialog.askdirectory(title="Select Folder with CSV Files")
+    folder_path = filedialog.askdirectory(title="Select Folder")
 
-    if folder_selected:
-        data_list = read_csvs_from_folder(folder_selected)
-        plot_multiple_csvs(data_list)
+    if folder_path:
+        data_dict = {}
+        for folder_name in os.listdir(folder_path):
+            subfolder_path = os.path.join(folder_path, folder_name)
+            if os.path.isdir(subfolder_path):
+                try:
+                    folder_number = int(folder_name)
+                except ValueError:
+                    continue  # Skip non-integer folder names
 
-# Entry point
+                # Look for the first matching "_Current_" CSV
+                for file_name in os.listdir(subfolder_path):
+                    if "_Current_" in file_name and file_name.endswith(".csv"):
+                        file_path_full = os.path.join(subfolder_path, file_name)
+                        data = read_csv_file(file_path_full)
+                        if data is not None:
+                            data_dict[folder_number] = data
+                        break  # Only the first matching CSV
+        plot_csvs_side_by_side(data_dict)
+
+# Main function
 if __name__ == "__main__":
-    select_folder_and_plot()
+    select_and_plot_all_subfolder_csvs()
