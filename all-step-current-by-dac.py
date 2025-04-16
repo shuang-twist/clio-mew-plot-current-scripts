@@ -38,7 +38,7 @@ def plot_csvs_side_by_side(data_dict):
         ax.scatter(grouped['Group'], grouped['CathodeCurrent(uA)'], s=20, label='Cathode Median', color='blue')
         ax.scatter(grouped['Group'], grouped['AnodeCurrent(uA)'], s=20, label='Anode Median', color='orange')
 
-        ax.set_title(f'Folder {folder_num}')
+        ax.set_title(f'{folder_num}')
         ax.set_xlabel('Group')
         ax.legend()
         ax.tick_params(axis='x', rotation=45)

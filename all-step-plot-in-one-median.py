@@ -47,12 +47,12 @@ def plot_median_csvs_side_by_side(data_dict):
         anode_med = anode_non_zero.median()
 
         ax.axhline(cathode_med, color='blue', linestyle='--',
-                   label=f'Cathode Med: {cathode_med:.2f}')
+                   label=f'{cathode_med:.2f}')
         ax.axhline(anode_med, color='orange', linestyle='--',
-                   label=f'Anode Med: {anode_med:.2f}')
+                   label=f'{anode_med:.2f}')
 
-        ax.set_title(f'Folder {folder_num}')
-        ax.set_xlabel('Relative Milliseconds')
+        ax.set_title(f'{folder_num}')
+        ax.set_xlabel('ms')
         ax.legend()
 
     axs[0].set_ylabel('Current (uA)')
