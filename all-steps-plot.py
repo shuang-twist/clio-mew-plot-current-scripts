@@ -61,11 +61,18 @@ def select_and_plot_csv():
         # Ensure total height does not exceed figure limits (e.g., max 0.8)
         total_height = min(total_height, 0.8)
 
-        # Create a figure and axes for check buttons and plot
+        # Create a figure
         fig = plt.figure(figsize=(10, 6))
-        
-        # Define axes for check buttons with dynamic height
-        ax_check_stat = plt.axes([0.05, 0.4, 0.2, total_height])
+
+        # Calculate dynamic position for check buttons
+        checkbox_width = 0.2
+        checkbox_x = 0.05
+        checkbox_height = min(0.8, base_height + max(0, len(integer_folder_names) - threshold) * additional_height_per_item)
+        checkbox_y = 0.5 - checkbox_height / 2  # Centered vertically
+
+        # Define axes for check buttons
+        ax_check_stat = plt.axes([checkbox_x, checkbox_y, checkbox_width, checkbox_height])
+
         check_stat = CheckButtons(ax_check_stat, [str(num) for num in integer_folder_names], [False] * len(integer_folder_names))
 
         # Define axes for plotting (right side of the figure)
