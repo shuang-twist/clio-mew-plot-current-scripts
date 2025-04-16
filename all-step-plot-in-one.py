@@ -23,7 +23,7 @@ def plot_csvs_side_by_side(data_dict, output_path):
 
     median_records = []
 
-    fig, axs = plt.subplots(1, n, figsize=(5 * n, 6), sharey=True)
+    fig, axs = plt.subplots(1, n, figsize=(5 * n, 6), sharey=True, constrained_layout=True)
     if n == 1:
         axs = [axs]  # Make it iterable
 
@@ -60,7 +60,6 @@ def plot_csvs_side_by_side(data_dict, output_path):
     
     axs[0].set_ylabel('Current (uA)')
     fig.suptitle('Current vs Time for Each Folder with Calculated Median', fontsize=16)
-    plt.tight_layout()
     plt.show()
 
     # Save the medians to a CSV
